@@ -2,8 +2,10 @@ const express = require("express");
 const router = express.Router();
 const engine = require("../engine");
 router.get("/", (req, res) => res.send("letsfly air-api is working!"));
+const { authCheck } = require('./authRoutes');
 
-router.post("/search", async (req, res) => {
+
+router.post("/search", authCheck, async (req, res) => {
   try {
     return res.json(await engine.search(req.body));
   } catch (error) {
@@ -12,7 +14,7 @@ router.post("/search", async (req, res) => {
   }
 });
 
-router.post("/book", async (req, res) => {
+router.post("/book", authCheck, async (req, res) => {
   try {
     return res.json(await engine.book(req.body));
   } catch (error) {

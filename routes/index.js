@@ -1,9 +1,17 @@
+"use strict";
+
 const express = require("express");
 const router = express.Router();
 const flightRoutes = require("./flightRoutes");
-const genRoutes = require("./genRoutes");
+const { router: authRoutes } = require("./authRoutes");
+const tripRoutes = require("./tripRoutes");
+const authMiddleware = require("../middleware/auth");
 
-// router.use("api/", genRoutes);
-router.use("/flight", flightRoutes);
+// Auth routes (no authentication required)
+router.use("/auth", authRoutes);
+
+// Protected routes (require authentication)
+router.use("/trips", authMiddleware, tripRoutes);
+router.use("/flights", authMiddleware, flightRoutes);
 
 module.exports = router;

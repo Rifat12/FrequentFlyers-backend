@@ -12,10 +12,17 @@ module.exports = function (sequelize, DataTypes) {
           notEmpty: true,
         },
       },
+      tripId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'trips',
+          key: 'id'
+        }
+      },
       offerId: {
         type: DataTypes.STRING,
       },
-
       offer: {
         type: DataTypes.STRING,
       },
@@ -25,11 +32,8 @@ module.exports = function (sequelize, DataTypes) {
     },
     {
       tableName: "flight_offer",
-
       freezeTableName: true,
-
       timestamps: false,
-
       underscored: true,
     }
   );

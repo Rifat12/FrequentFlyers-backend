@@ -1,33 +1,39 @@
 # letsfly API Documentation
 
-## /flight/search (POST)
 
-**Description:** Searches for flights using the Amadeus API.
 
-**Request Body:**
+## Flight Offer Model
+
+Flight offers are always associated with a trip. The model includes:
 
 ```json
 {
-  "origin": "string (e.g., JFK)",
-  "destination": "string (e.g., LHR)",
-  "departureDate": "YYYY-MM-DD",
-  "returnDate": "YYYY-MM-DD (optional for one-way trips)",
-  "adults": "integer",
-  "children": "integer",
-  "infants": "integer",
-  "travelClass": "string (e.g., ECONOMY, BUSINESS)"
+  "id": "integer (auto-generated)",
+  "tripId": "integer (required)",
+  "offerId": "string",
+  "offer": "string",
+  "extraParams": "string"
 }
 ```
 
-**Response:**
+## Passenger Model
+
+Passengers are associated with flight offers and users. The model includes:
 
 ```json
 {
-  "success": true/false,
-  "responseType": "flight-search",
-  "data": [
-    // Array of flight offers (structure depends on Amadeus API response)
-  ]
+  "id": "integer (auto-generated)",
+  "flightOfferId": "integer (required)",
+  "userId": "integer (required)",
+  "isUser": "boolean (indicates if passenger is the user)",
+  "firstName": "string (required)",
+  "lastName": "string (required)",
+  "dateOfBirth": "date (required)",
+  "gender": "string (required)",
+  "email": "string (optional)",
+  "phone": "string (optional)",
+  "createdAt": "timestamp",
+  "updatedAt": "timestamp"
 }
 ```
 
@@ -41,4 +47,10 @@
 
 ## Error Handling
 
-Standard HTTP status codes are used to indicate errors.  Error details are included in the response body.
+Standard HTTP status codes are used to indicate errors. Error details are included in the response body.
+
+Common errors:
+- 400: Missing or invalid tripId
+- 400: Invalid passenger information
+- 404: Trip not found
+- 500: Internal server error

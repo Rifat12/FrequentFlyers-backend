@@ -1,14 +1,14 @@
 const OAuthRQ = require("../requests/OAuthRQ");
 const moment = require("moment");
-const db = require("../models");
+const NodeCache = require("node-cache");
+
+// Initialize cache with standard TTL of 30 minutes
+const cache = new NodeCache({ stdTTL: 1800 });
+const CACHE_KEY = "amadeusOAuth2Token";
 
 async function OAuth() {
-  // Find the existing OAuth token
-  let auth = await db.auth.findOne({
-    where: {
-      type: "amadeusOAuth2Token",
-    },
-  });
+  // Try to get token from cache
+  let auth = cache.get(CACHE_KEY);
 
   // Check if the token doesn't exist or has expired
   if (!auth || moment(auth.expires_in).isBefore(moment())) {
@@ -16,18 +16,8 @@ async function OAuth() {
     const wholeRes = await OAuthRQ();
     const OAuthRes = wholeRes.data;
 
-    if (auth) {
-      await db.auth.destroy({
-        where: {
-          type: "amadeusOAuth2Token",
-        },
-      });
-    }
-
-    console.log(OAuthRes, "OAuthRes");
-
-    // Save the new token to the database
-    auth = await db.auth.create({
+    // Create auth object
+    auth = {
       type: OAuthRes.type,
       client_id: OAuthRes.client_id,
       token_type: OAuthRes.token_type,
@@ -37,9 +27,15 @@ async function OAuth() {
         .format("YYYY-MM-DD HH:mm:ss")
         .toString(),
       extraParams: JSON.stringify(OAuthRes),
-    });
+    };
+
+    // Store in cache
+    // Set TTL to slightly less than token expiry time to ensure we refresh before expiration
+    const ttl = Math.floor(OAuthRes.expires_in * 0.9); // 90% of expiry time
+    cache.set(CACHE_KEY, auth, ttl);
   }
-  console.log("Expiry", auth.expires_in);
+
+  console.log("Token expires at:", auth.expires_in);
   return auth.access_token;
 }
 

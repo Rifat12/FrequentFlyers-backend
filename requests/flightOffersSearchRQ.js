@@ -65,7 +65,7 @@ function buildFlightOffersRQBody(params) {
 
   // Prepare final request body
   let requestBody = {
-    currencyCode: "BDT",
+    currencyCode: "USD",
     originDestinations: originDestinations,
     travelers: travelers,
     sources: ["GDS"],
@@ -80,7 +80,7 @@ function buildFlightOffersRQBody(params) {
           },
         ],
         carrierRestrictions: {
-          excludedCarrierCodes: ["AA", "TP", "AZ"],
+          excludedCarrierCodes: ["BS", "BG"],
         },
       },
     },
