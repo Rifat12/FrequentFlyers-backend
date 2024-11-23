@@ -1,6 +1,4 @@
-# Travel Booking System
-
-A full-stack travel booking system with flight search, trip management, and event planning capabilities.
+#Frequent Flyers
 
 ## Features
 
