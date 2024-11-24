@@ -233,6 +233,87 @@ Response (200 OK):
 }
 ```
 
+## Airports API
+
+### Search Airports
+
+**GET** `/airports/search`
+
+**Description:** Search for airports by query string. The search is performed across airport names, cities, IATA codes, and countries.
+
+**Query Parameters:**
+- `query` (required): Search string (minimum 2 characters)
+
+**Auth Required:** Yes
+
+**Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "responseType": "airport-search",
+  "data": [
+    {
+      "icao": "KJFK",
+      "iata": "JFK",
+      "name": "John F Kennedy International Airport",
+      "city": "New York",
+      "country": "United States",
+      "displayName": "New York (JFK) - John F Kennedy International Airport",
+      "countryCode": "US"
+    }
+  ]
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "success": true,
+  "responseType": "airport-search",
+  "data": [],
+  "message": "Please provide at least 2 characters"
+}
+```
+
+### Get Airport Details
+
+**GET** `/airports/:iata`
+
+**Description:** Get detailed information about a specific airport by its IATA code.
+
+**Parameters:**
+- `iata`: Airport IATA code (e.g., JFK, LHR)
+
+**Auth Required:** Yes
+
+**Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "responseType": "airport-details",
+  "data": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "state": "New York",
+    "country": "United States",
+    "elevation": 13,
+    "lat": 40.639751,
+    "lon": -73.778925,
+    "tz": "America/New_York"
+  }
+}
+```
+
+**Error Response (404 Not Found):**
+```json
+{
+  "success": false,
+  "error": "Airport not found"
+}
+```
+
 ### Error Responses
 
 - `400 Bad Request`: Missing required fields
