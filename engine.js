@@ -6,6 +6,7 @@ async function search(args) {
   const response = {
     success: true,
     responseType: "flight-search",
+    params: args,
     data: await flightSearch(args),
   };
   return response;
