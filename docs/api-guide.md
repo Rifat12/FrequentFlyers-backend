@@ -233,6 +233,62 @@ Response (200 OK):
 }
 ```
 
+## /flight/intelligent-search (POST)
+
+**Description:** Parses a natural language flight search query and returns structured parameters that can be used with the regular flight search endpoint. This endpoint does NOT perform the actual flight search - it only converts natural language to search parameters.
+
+**Request Body:**
+
+```json
+{
+    "tripId": 1,
+	  "naturalQuery": "economy flight from Chicago to NYC for me and my child on December 15th"
+}
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+	"success": true,
+	"message": "",
+	"data": {
+		"origin": "ORD",
+		"destination": "JFK",
+		"departureDate": "2024-12-15",
+		"returnDate": "",
+		"adults": 1,
+		"children": 1,
+		"infants": 0,
+		"travelClass": "ECONOMY",
+		"tripType": "one-way",
+		"tripId": 1
+	}
+}
+
+```
+
+**Error Response (400 Bad Request):**
+
+```json
+{
+  "success": false,
+  "message": "Date not specified or invalid"
+}
+```
+
+**Common Error Messages:**
+- "Natural language query is required"
+- "tripId is required"
+- "Date not specified or invalid"
+- "Invalid origin or destination"
+- "Failed to parse LLM response"
+
+**Usage Flow:**
+1. Call `/flight/intelligent-search` with natural language query
+2. Use the returned parameters to call `/flight/search`
+3. Process flight search results as normal
+
 ## Airports API
 
 ### Search Airports
