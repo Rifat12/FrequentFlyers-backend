@@ -321,6 +321,94 @@ function getIATACode(location) {
   return cityToIATA[lower] || null;
 }
 
+async function callGLLM(query) {
+  const prompt = `
+You are a flight search parser. The user will give you a natural language flight request. 
+You must return a JSON ONLY with the following fields:
+{
+  "success": boolean,
+  "message": "string",
+  "data": {
+    "origin": "string (IATA code for the city mentioned, e.g. ORD for Chicago)",
+    "destination": "string (IATA code for the city mentioned, e.g. JFK for New York)",
+    "departureDate": "ONLY YYYY-MM-DD",
+    "returnDate": "ONLY YYYY-MM-DD or empty since currently not supported",
+    "adults": integer,
+    "children": integer,
+    "infants": integer,
+    "travelClass": "ECONOMY or BUSINESS (default ECONOMY if not specified)",
+    "tripType": "one-way"
+  }
+}
+
+Constraints:
+- If passenger count not mentioned, assume 1 adult, 0 children, 0 infants.
+- If travel class not mentioned, assume ECONOMY.
+- Trip type always one-way, so returnDate can be empty.
+- If date not clearly mentioned or can't be parsed, return success:false and message "Date not specified or invalid".
+- If origin/destination can't be found or matched to a known IATA code, return success:false and message "Invalid origin or destination".
+- Origin and destination must be IATA codes for major airports. If query says "Chicago", must return "ORD". If "New York" or "NYC", must return "JFK".
+- Make sure each field is correctly formatted and validated, e.g. departureDate must be in YYYY-MM-DD format without any extra text.
+
+Input: "${query}"
+
+Now return the requested JSON only. No extra text.
+`;
+
+  try {
+    const response = await axios.post('https://api.groq.com/v1/chat/completions', {
+      model: "llama3-70b-8192",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.2
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.data.choices || !response.data.choices[0].message) {
+      return {
+        success: false,
+        message: "No response from LLM"
+      };
+    }
+
+    let llmContent = response.data.choices[0].message.content || "";
+
+    // Attempt to extract JSON inside triple backticks
+    const tripleBacktickMatch = llmContent.match(/```([\s\S]*?)```/);
+
+    let jsonString = "";
+    if (tripleBacktickMatch && tripleBacktickMatch[1]) {
+      // We found a code block, let's assume that's the JSON
+      jsonString = tripleBacktickMatch[1].trim();
+    } else {
+      // No code block found; the model might have returned JSON without triple backticks
+      jsonString = llmContent.trim();
+    }
+
+    let result;
+    try {
+      result = JSON.parse(jsonString);
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to parse LLM response: Invalid JSON"
+      };
+    }
+
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      message: "LLM API error: " + (error.response?.data?.error || error.message)
+    };
+  }
+}
 
 
 async function callLLM(query) {
@@ -357,12 +445,99 @@ Input: "${query}"
 Now return the requested JSON only. No extra text.
 `;
 
+let prompt2 = `You are an advanced flight search parser API endpoint. Your role is to parse natural language flight queries and return strictly formatted JSON responses. You must follow exact specifications and validation rules.
+
+INPUT PROCESSING:
+The user will provide a natural language flight request. You must extract and validate all relevant information.
+
+OUTPUT SPECIFICATION:
+Return ONLY a valid JSON object with the following schema:
+{
+  "success": boolean,         // Required: Indicates if parsing was successful
+  "message": string,         // Required: Success confirmation or error details
+  "data": {
+    "origin": string,        // Required: Valid IATA airport code (3 letters)
+    "destination": string,   // Required: Valid IATA airport code (3 letters)
+    "departureDate": string, // Required: Format YYYY-MM-DD
+    "returnDate": string,    // Optional: Format YYYY-MM-DD or empty string
+    "adults": integer,       // Required: Range 1-9, default 1
+    "children": integer,     // Required: Range 0-9, default 0
+    "infants": integer,      // Required: Range 0-9, default 0
+    "travelClass": string,   // Required: Enum ["ECONOMY", "BUSINESS"]
+    "tripType": string      // Required: Always "one-way"
+  }
+}
+
+VALIDATION RULES:
+1. Dates:
+   - departureDate must be:
+     * In YYYY-MM-DD format
+     * Not in the past
+     * Within next 365 days
+   - returnDate must be empty string (one-way trips only)
+
+2. Airports:
+   - Must be valid IATA codes
+   - Common city names must map to primary airports:
+     * "Chicago" → "ORD"
+     * "New York"/"NYC" → "JFK"
+     * "Los Angeles"/"LA" → "LAX"
+     * [Add more major city mappings]
+
+3. Passengers:
+   - adults: Default 1 if not specified, max 9
+   - children: Default 0 if not specified, max 9
+   - infants: Default 0 if not specified, max 9
+   - Total passengers (adults + children + infants) must not exceed 9
+
+4. Travel Class:
+   - Default: "ECONOMY"
+   - Valid values: ["ECONOMY", "BUSINESS"]
+   - Case-insensitive input parsing
+
+ERROR HANDLING:
+Return success: false with appropriate message for:
+1. Invalid/missing dates
+2. Unrecognized airports
+3. Invalid passenger counts
+4. Any other parsing failures
+
+The response must:
+1. Be valid JSON
+2. Include ALL required fields
+3. Use correct data types
+4. Follow exact format specifications
+5. Include appropriate error messages
+6. Not include any additional text or commentary
+
+Example Input: "I need a flight from Chicago to New York on January 15th 2025"
+Example Output:
+{
+  "success": true,
+  "message": "Successfully parsed flight request",
+  "data": {
+    "origin": "ORD",
+    "destination": "JFK",
+    "departureDate": "2025-01-15",
+    "returnDate": "",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "travelClass": "ECONOMY",
+    "tripType": "one-way"
+  }
+}
+
+Input: "${query}"
+
+Return ONLY the JSON response. No additional text or explanations.`
+
   try {
     const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
       model: "meta-llama/llama-3.1-405b-instruct:free",
       messages: [
         { role: "system", content: "You are a helpful assistant." }, 
-        { role: "user", content: prompt }
+        { role: "user", content: prompt2 }
       ],
       temperature: 0.2
     }, {
@@ -372,7 +547,18 @@ Now return the requested JSON only. No extra text.
       }
     });
 
+
+
+    
+    if (!response.data.choices || !response.data.choices[0].message) {
+      return {
+        success: false,
+        message: "No response from LLM"
+      };
+    }
+
     let llmContent = response.data.choices[0].message.content || "";
+    console.log(llmContent);
 
     // Attempt to extract JSON inside triple backticks
     // This regex looks for a code block ``` ... ```
