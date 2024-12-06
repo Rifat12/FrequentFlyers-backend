@@ -106,28 +106,28 @@ class TripService {
         }
     }
 
-    async associateFlightWithTrip(tripId, userId, flightOfferId) {
-        try {
-            // Verify trip belongs to user
-            const trip = await Trip.findOne({
-                where: { 
-                    id: tripId,
-                    userId 
-                }
-            });
-            if (!trip) {
-                throw new Error('Trip not found');
-            }
+    // async associateFlightWithTrip(tripId, userId, flightOfferId) {
+    //     try {
+    //         // Verify trip belongs to user
+    //         const trip = await Trip.findOne({
+    //             where: { 
+    //                 id: tripId,
+    //                 userId 
+    //             }
+    //         });
+    //         if (!trip) {
+    //             throw new Error('Trip not found');
+    //         }
 
-            await FlightOffer.update(
-                { tripId },
-                { where: { id: flightOfferId } }
-            );
-            return true;
-        } catch (error) {
-            throw error;
-        }
-    }
+    //         await FlightOffer.update(
+    //             { tripId },
+    //             { where: { id: flightOfferId } }
+    //         );
+    //         return true;
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // }
 }
 
 module.exports = new TripService();

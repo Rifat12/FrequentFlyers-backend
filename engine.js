@@ -1,7 +1,7 @@
 const express = require("express");
 const { flightSearch } = require("./services/flightSearch");
 const { searchAirports, getAirportByIata } = require("./services/airportSearch");
-const { bookFlight } = require("./services/flightBooking");
+const flightBookingService = require("./services/flightBooking");
 
 async function search(args) {
   const response = {
@@ -14,10 +14,23 @@ async function search(args) {
 }
 
 async function book(args) {
-  return {
-    success: true,
-    data: {},
-  };
+  const { tripId, passengerInfo, flightOfferInfo } = args;
+  
+  try {
+    const bookingResult = await flightBookingService.bookFlight(
+      tripId,
+      passengerInfo,
+      flightOfferInfo
+    );
+    
+    return {
+      success: true,
+      responseType: "flight-booking",
+      data: bookingResult
+    };
+  } catch (error) {
+    throw new Error(`Booking failed: ${error.message}`);
+  }
 }
 
 async function searchAirport(query) {

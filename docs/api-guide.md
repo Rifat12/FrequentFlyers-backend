@@ -122,37 +122,45 @@ Response (201 Created):
 ### Get All User Trips
 
 ```http
-GET /trips
+GET /trips 
 ```
-
+(or get a specific trip details by /trips/:tripid)
 Response (200 OK):
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Summer Vacation 2024",
-    "destination": "Paris, France",
-    "startDate": "2024-06-01",
-    "endDate": "2024-06-15",
-    "userId": 1,
-    "events": [
-      {
-        "id": 1,
-        "name": "Eiffel Tower Visit",
-        "date": "2024-06-02",
-        "time": "10:00"
-      }
-    ],
-    "flightOffers": [
-      {
-        "id": 1,
-        "offerId": "ABC123",
-        "offer": "{...}"
-      }
-    ]
-  }
-]
+{
+	"id": 1,
+	"userId": 1,
+	"name": "Summer Vacation 2026",
+	"destination": "Miami, USA",
+	"startDate": "2025-06-01T00:00:00.000Z",
+	"endDate": "2024-06-15T00:00:00.000Z",
+	"createdAt": "2024-12-06T09:18:32.834Z",
+	"updatedAt": "2024-12-06T09:18:32.834Z",
+	"events": [
+		{
+			"id": 1,
+			"tripId": 1,
+			"name": "Kayaking in Hawaii",
+			"date": "2024-12-01T00:00:00.000Z",
+			"time": "24:00:00",
+			"createdAt": "2024-12-06T09:18:38.767Z",
+			"updatedAt": "2024-12-06T09:18:38.768Z"
+		}
+	],
+	"flightOffers": [
+		{
+			"flightID": 1,
+			"tripId": 1,
+			"offer": "{\"offerId\":\"1\",\"isDirectFlight\":false,\"transitInfo\":\"1 stop, transit\",\"transitDetails\":{\"transitLocation\":\"MSP\",\"transitDuration\":\"PT3H43M\"},\"airline\":{\"code\":\"SY\",\"name\":\"SUN COUNTRY\"},\"totalPrice\":\"158.35\",\"currency\":\"USD\",\"flights\":[{\"departure\":{\"airportCode\":\"JFK\",\"airportName\":\"NYC\",\"time\":\"2024-12-29T11:38:00\"},\"arrival\":{\"airportCode\":\"MSP\",\"airportName\":\"MSP\",\"time\":\"2024-12-29T13:44:00\"},\"carrier\":{\"code\":\"SY\",\"name\":\"SUN COUNTRY\"},\"flightNumber\":\"568\",\"aircraft\":{\"code\":\"738\",\"name\":\"BOEING 737-800\"},\"duration\":\"PT3H6M\"},{\"departure\":{\"airportCode\":\"MSP\",\"airportName\":\"MSP\",\"time\":\"2024-12-29T17:27:00\"},\"arrival\":{\"airportCode\":\"ORD\",\"airportName\":\"CHI\",\"time\":\"2024-12-29T19:05:00\"},\"carrier\":{\"code\":\"SY\",\"name\":\"SUN COUNTRY\"},\"flightNumber\":\"261\",\"aircraft\":{\"code\":\"738\",\"name\":\"BOEING 737-800\"},\"duration\":\"PT1H38M\"}]}",
+			"pnr": "0R2XB4",
+			"ticketNo": "9995213804439",
+			"passengers": "[{\"firstName\":\"John\",\"lastName\":\"Doe\",\"phoneNumber\":\"+1 (123) 456-7890\",\"gender\":\"Male\",\"nationality\":\"American\",\"email\":\"john.doe@example.com\",\"dateOfBirth\":\"01/01/1980\",\"frequentFlyerNumber\":\"ABC123\",\"travelerType\":\"ADT\"},{\"firstName\":\"Jane\",\"lastName\":\"Smith\",\"phoneNumber\":\"+1 (987) 654-3210\",\"gender\":\"Female\",\"nationality\":\"Canadian\",\"email\":\"jane.smith@example.com\",\"dateOfBirth\":\"05/15/2015\",\"frequentFlyerNumber\":\"DEF456\",\"travelerType\":\"CHD\"}]",
+			"createdAt": "2024-12-06T09:18:48.035Z",
+			"updatedAt": "2024-12-06T09:18:48.035Z"
+		}
+	]
+}
 ```
 
 ## Events API
@@ -196,6 +204,9 @@ Response (200 OK):
     }
   ]
   ```
+
+(or get a specific trip event by /trips/:eventid)
+
 
 ## Flights API
 
@@ -282,7 +293,6 @@ Response (200 OK):
     ]
   }
 }
-
 ```
 
 ## Response Example##
@@ -347,8 +357,8 @@ Response (200 OK):
     ]
   }
 }
-
 ```
+
 ## /flight/intelligent-search (POST)
 
 **Description:** Parses a natural language flight search query and returns structured parameters that can be used with the regular flight search endpoint. This endpoint does NOT perform the actual flight search - it only converts natural language to search parameters.
@@ -357,8 +367,8 @@ Response (200 OK):
 
 ```json
 {
-    "tripId": 1,
-	  "naturalQuery": "economy flight from Chicago to NYC for me and my child on December 15th"
+  "tripId": 1,
+  "naturalQuery": "economy flight from Chicago to NYC for me and my child on December 15th"
 }
 ```
 
@@ -366,22 +376,21 @@ Response (200 OK):
 
 ```json
 {
-	"success": true,
-	"message": "",
-	"data": {
-		"origin": "ORD",
-		"destination": "JFK",
-		"departureDate": "2024-12-15",
-		"returnDate": "",
-		"adults": 1,
-		"children": 1,
-		"infants": 0,
-		"travelClass": "ECONOMY",
-		"tripType": "one-way",
-		"tripId": 1
-	}
+  "success": true,
+  "message": "",
+  "data": {
+    "origin": "ORD",
+    "destination": "JFK",
+    "departureDate": "2024-12-15",
+    "returnDate": "",
+    "adults": 1,
+    "children": 1,
+    "infants": 0,
+    "travelClass": "ECONOMY",
+    "tripType": "one-way",
+    "tripId": 1
+  }
 }
-
 ```
 
 **Error Response (400 Bad Request):**
@@ -394,6 +403,7 @@ Response (200 OK):
 ```
 
 **Common Error Messages:**
+
 - "Natural language query is required"
 - "tripId is required"
 - "Date not specified or invalid"
@@ -401,9 +411,112 @@ Response (200 OK):
 - "Failed to parse LLM response"
 
 **Usage Flow:**
+
 1. Call `/flight/intelligent-search` with natural language query
 2. Use the returned parameters to call `/flight/search`
 3. Process flight search results as normal
+
+## /flight/book (POST)
+
+**Description:** Books a flight by storing the flight offer and passenger information. Generates a PNR and ticket number for the booking. The flightOfferInfo should be taken directly from the flight search response (simpliefiedRes array item from /flight/search endpoint) without modification.
+
+**Request Body:**
+```json
+{
+  "tripId": "integer (required)",
+  "passengerInfo": [
+    {
+      "firstName": "string (required)",
+      "lastName": "string (required)",
+      "phoneNumber": "string",
+      "gender": "string (required)",
+      "nationality": "string (required)",
+      "email": "string",
+      "dateOfBirth": "string (required, MM/DD/YYYY)",
+      "frequentFlyerNumber": "string",
+      "travelerType": "string (required, e.g., ADT, CHD, INF)"
+    }
+  ],
+  "flightOfferInfo": {
+    // This should be a complete flight offer object from the search response
+    // Copy an item from the simpliefiedRes array in the /flight/search response
+    "offerId": "string",
+    "isDirectFlight": "boolean",
+    "transitInfo": "string",
+    "transitDetails": {
+      "transitLocation": "string",
+      "transitDuration": "string (ISO-8601 duration format)"
+    },
+    "airline": {
+      "code": "string",
+      "name": "string"
+    },
+    "totalPrice": "string",
+    "currency": "string",
+    "flights": [
+      {
+        "departure": {
+          "airportCode": "string",
+          "airportName": "string",
+          "time": "string (ISO-8601 format)"
+        },
+        "arrival": {
+          "airportCode": "string",
+          "airportName": "string",
+          "time": "string (ISO-8601 format)"
+        },
+        "carrier": {
+          "code": "string",
+          "name": "string"
+        },
+        "flightNumber": "string",
+        "aircraft": {
+          "code": "string",
+          "name": "string"
+        },
+        "duration": "string (ISO-8601 duration format)"
+      }
+    ]
+  }
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "responseType": "flight-booking",
+  "data": {
+    "bookingId": "integer",
+    "pnr": "string (6 characters)",
+    "ticketNo": "string (13 digits)",
+    "tripId": "integer",
+    "flightDetails": {
+      // Same structure as flightOfferInfo from request
+    }
+  }
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "error": "Missing required booking information"
+}
+```
+
+**Common Error Messages:**
+- "Missing required booking information"
+- "Missing required passenger information"
+- "Passengers must be an array"
+- "Flight booking failed: [specific error message]"
+
+## Implementation Details
+
+1. **Flight Offer Selection:**
+   - The flightOfferInfo should be taken directly from the flight search response
+   - Use an item from the simpliefiedRes array returned by /flight/search
+   - Do not modify the flight offer structure
 
 ## Airports API
 
@@ -414,11 +527,13 @@ Response (200 OK):
 **Description:** Search for airports by query string. The search is performed across airport names, cities, IATA codes, and countries.
 
 **Query Parameters:**
+
 - `query` (required): Search string (minimum 2 characters)
 
 **Auth Required:** Yes
 
 **Success Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -438,6 +553,7 @@ Response (200 OK):
 ```
 
 **Error Response (400 Bad Request):**
+
 ```json
 {
   "success": true,
@@ -454,11 +570,13 @@ Response (200 OK):
 **Description:** Get detailed information about a specific airport by its IATA code.
 
 **Parameters:**
+
 - `iata`: Airport IATA code (e.g., JFK, LHR)
 
 **Auth Required:** Yes
 
 **Success Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -479,6 +597,7 @@ Response (200 OK):
 ```
 
 **Error Response (404 Not Found):**
+
 ```json
 {
   "success": false,
