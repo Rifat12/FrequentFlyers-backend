@@ -1,6 +1,7 @@
 const express = require("express");
 const { flightSearch } = require("./services/flightSearch");
 const { searchAirports, getAirportByIata } = require("./services/airportSearch");
+const { bookFlight } = require("./services/flightBooking");
 
 async function search(args) {
   const response = {

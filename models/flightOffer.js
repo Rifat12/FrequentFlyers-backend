@@ -9,6 +9,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+        validate: {
+          notEmpty: true,
+        },
       },
       tripId: {
         type: DataTypes.INTEGER,
@@ -17,6 +20,15 @@ module.exports = (sequelize, DataTypes) => {
           model: 'trips',
           key: 'id'
         }
+      },
+      offerId: {
+        type: DataTypes.STRING,
+      },
+      offer: {
+        type: DataTypes.STRING,
+      },
+      extraParams: {
+        type: DataTypes.STRING,
       },
     },
     {

@@ -220,19 +220,135 @@ Response (200 OK):
 }
 ```
 
-**Response:**
+**Response Structure:**
 
 ```json
 {
-  "success": true/false,
+  "success": true,
   "responseType": "flight-search",
-  "tripId": "integer",
-  "data": [
-    // Array of flight offers (structure depends on Amadeus API response)
-  ]
+  "params": {
+    "tripId": "integer",
+    "origin": "string",
+    "destination": "string",
+    "departureDate": "YYYY-MM-DD",
+    "adults": "integer",
+    "children": "integer",
+    "infants": "integer",
+    "travelClass": "string",
+    "tripType": "string"
+  },
+  "data": {
+    "tripId": "integer",
+    "simpliefiedRes": [
+      {
+        "offerId": "string",
+        "isDirectFlight": "boolean",
+        "transitInfo": "string",
+        "transitDetails": {
+          "transitLocation": "string",
+          "transitDuration": "ISO-8601 duration format"
+        },
+        "airline": {
+          "code": "string",
+          "name": "string"
+        },
+        "totalPrice": "string",
+        "currency": "string",
+        "flights": [
+          {
+            "departure": {
+              "airportCode": "string",
+              "airportName": "string",
+              "time": "ISO-8601 format"
+            },
+            "arrival": {
+              "airportCode": "string",
+              "airportName": "string",
+              "time": "ISO-8601 format"
+            },
+            "carrier": {
+              "code": "string",
+              "name": "string"
+            },
+            "flightNumber": "string",
+            "aircraft": {
+              "code": "string",
+              "name": "string"
+            },
+            "duration": "ISO-8601 duration format"
+          }
+        ]
+      }
+    ]
+  }
 }
+
 ```
 
+## Response Example##
+
+```json
+{
+  "success": true,
+  "responseType": "flight-search",
+  "params": {
+    "tripId": "integer",
+    "origin": "string",
+    "destination": "string",
+    "departureDate": "YYYY-MM-DD",
+    "adults": "integer",
+    "children": "integer",
+    "infants": "integer",
+    "travelClass": "string",
+    "tripType": "string"
+  },
+  "data": {
+    "tripId": "integer",
+    "simpliefiedRes": [
+      {
+        "offerId": "string",
+        "isDirectFlight": "boolean",
+        "transitInfo": "string",
+        "transitDetails": {
+          "transitLocation": "string",
+          "transitDuration": "ISO-8601 duration format"
+        },
+        "airline": {
+          "code": "string",
+          "name": "string"
+        },
+        "totalPrice": "string",
+        "currency": "string",
+        "flights": [
+          {
+            "departure": {
+              "airportCode": "string",
+              "airportName": "string",
+              "time": "ISO-8601 format"
+            },
+            "arrival": {
+              "airportCode": "string",
+              "airportName": "string",
+              "time": "ISO-8601 format"
+            },
+            "carrier": {
+              "code": "string",
+              "name": "string"
+            },
+            "flightNumber": "string",
+            "aircraft": {
+              "code": "string",
+              "name": "string"
+            },
+            "duration": "ISO-8601 duration format"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+```
 ## /flight/intelligent-search (POST)
 
 **Description:** Parses a natural language flight search query and returns structured parameters that can be used with the regular flight search endpoint. This endpoint does NOT perform the actual flight search - it only converts natural language to search parameters.

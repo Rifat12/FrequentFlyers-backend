@@ -35,7 +35,7 @@ function buildSearchParams(requestBody) {
   return { tripId, fromTo, adults, children, infants, travelClass };
 }
 
-const simplifyFlightData = (rawData) => {
+const simplifyFlightDataV0 = (rawData) => {
   if (!rawData?.data?.data || !rawData?.data?.dictionaries) return [];
 
   const { locations, carriers, aircraft } = rawData.data.dictionaries;
@@ -76,6 +76,82 @@ const simplifyFlightData = (rawData) => {
       flight_segments: flights,
     };
   });
+};
+
+const simplifyFlightData = (rawData) => {
+  if (!rawData?.data?.data || !rawData?.data?.dictionaries) return [];
+
+  const { locations, carriers, aircraft } = rawData.data.dictionaries;
+
+  const calculateTransitDuration = (arrivalTime, departureTime) => {
+    const arrivalDate = new Date(arrivalTime);
+    const departureDate = new Date(departureTime);
+    const diffMs = departureDate - arrivalDate; // Difference in milliseconds
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `PT${diffHours}H${diffMinutes}M`;
+  };
+
+  return rawData.data.data
+    .filter((offer) => offer.itineraries[0].segments.length <= 2) // Skip offers with more than 2 segments
+    .map((offer) => {
+      const { id, itineraries, price, validatingAirlineCodes } = offer;
+      const segments = itineraries[0].segments;
+
+      // Determine if the flight is direct and transit info
+      const isDirectFlight = segments.length === 1;
+      const transitInfo = isDirectFlight
+        ? "Direct flight"
+        : `${segments.length - 1} stop, transit`;
+
+      // Include transit location and duration for connecting flights
+      const transitDetails = !isDirectFlight
+        ? {
+            transitLocation: segments[0].arrival.iataCode,
+            transitDuration: calculateTransitDuration(
+              segments[0].arrival.at,
+              segments[1].departure.at
+            ),
+          }
+        : null;
+
+      const flights = segments.map((segment) => ({
+        departure: {
+          airportCode: segment.departure.iataCode,
+          airportName: locations?.[segment.departure.iataCode]?.cityCode || "Unknown",
+          time: segment.departure.at,
+        },
+        arrival: {
+          airportCode: segment.arrival.iataCode,
+          airportName: locations?.[segment.arrival.iataCode]?.cityCode || "Unknown",
+          time: segment.arrival.at,
+        },
+        carrier: {
+          code: segment.carrierCode,
+          name: carriers?.[segment.carrierCode] || "Unknown",
+        },
+        flightNumber: segment.number,
+        aircraft: {
+          code: segment.aircraft?.code,
+          name: aircraft?.[segment.aircraft?.code] || "Unknown",
+        },
+        duration: segment.duration,
+      }));
+
+      return {
+        offerId: id,
+        isDirectFlight,
+        transitInfo,
+        transitDetails,
+        airline: {
+          code: validatingAirlineCodes?.[0],
+          name: carriers?.[validatingAirlineCodes?.[0]] || "Unknown",
+        },
+        totalPrice: price.grandTotal,
+        currency: price.currency,
+        flights,
+      };
+    });
 };
 
 // Basic city to IATA mapping for demonstration
@@ -245,75 +321,7 @@ function getIATACode(location) {
   return cityToIATA[lower] || null;
 }
 
-// Function to call OpenRouter LLM API
-// async function callLLMv1(query) {
 
-//   const prompt = `
-// You are a flight search parser. The user will give you a natural language flight request. 
-// You must return a JSON ONLY with the following fields:
-// {
-//   "success": boolean,
-//   "message": "string",
-//   "data": {
-//     "origin": "string (IATA code for the city mentioned, e.g. ORD for Chicago)",
-//     "destination": "string (IATA code for the city mentioned, e.g. JFK for New York)",
-//     "departureDate": "ONLY YYYY-MM-DD", //nothing but YYYY-MM-DD
-//     "returnDate": "ONLY YYYY-MM-DD or empty since currently not supported",
-//     "adults": integer,
-//     "children": integer,
-//     "infants": integer,
-//     "travelClass": "ECONOMY or BUSINESS (default ECONOMY if not specified)",
-//     "tripType": "one-way"
-//   }
-// }
-
-// Constraints:
-// - If passenger count not mentioned, assume 1 adult, 0 children, 0 infants.
-// - If travel class not mentioned, assume ECONOMY.
-// - Trip type always one-way, so returnDate can be empty.
-// - If date not clearly mentioned or can't be parsed, return success:false and message "Date not specified or invalid".
-// - If origin/destination can't be found or matched to a known IATA code, return success:false and message "Invalid origin or destination".
-// - Origin and destination must be IATA codes for major airports. If query says "Chicago", must return "ORD". If "New York" or "NYC", must return "JFK".
-// - Make sure each field is correctly formatted and validated., eg departureDate must be in YYYY-MM-DD format without any extra text.
-
-// Input: "${query}"
-
-// Now return the requested JSON only. No extra text.
-// `;
-
-// try {
-//   const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-//     model: "meta-llama/llama-3.1-405b-instruct:free",
-//     messages: [{ role: "system", content: "You are a helpful assistant." }, { role: "user", content: prompt }],
-//     temperature: 0.2
-//   }, {
-//     headers: {
-//       'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-//       'Content-Type': 'application/json'
-//     }
-//   });
-
-//   let result;
-//   console.log("PRINT", response.data.choices[0].message.content);
-//   const newResponse = response.data.choices[0].message.contentstr.replace(/```[\s\S]*```/g, '');
-//   try {
-//     result = JSON.parse(newResponse);
-//   } catch (e) {
-//     return {
-//       success: false,
-//       message: "Failed to parse LLM response"
-//     };
-//   }
-
-//   return result;
-// } catch (error) {
-//   return {
-//     success: false,
-//     message: "LLM API error: " + (error.response?.data?.error || error.message)
-//   };
-// }
-
-// }
 
 async function callLLM(query) {
   const prompt = `

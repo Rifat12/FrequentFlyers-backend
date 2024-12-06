@@ -70,7 +70,7 @@ function buildFlightOffersRQBody(params) {
     travelers: travelers,
     sources: ["GDS"],
     searchCriteria: {
-      maxFlightOffers: 10,
+      maxFlightOffers: 2,
       flightFilters: {
         cabinRestrictions: [
           {
