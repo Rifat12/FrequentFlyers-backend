@@ -470,8 +470,10 @@ Return ONLY a valid JSON object with the following schema:
 
 VALIDATION RULES:
 1. Dates:
-   - departureDate must be:
-     * In YYYY-MM-DD format
+   - Derive dates from user input text if not explicitly mentioned, eg "tomorrow", thanksgiving day, christmas, etc.
+   - current date is Dec 2024, so if any month other than dec is mentioned, assume it's for next year (2025)
+   - Output departureDate must be:
+     *  YYYY-MM-DD format
      * Not in the past
      * Within next 365 days
    - returnDate must be empty string (one-way trips only)
@@ -482,7 +484,6 @@ VALIDATION RULES:
      * "Chicago" → "ORD"
      * "New York"/"NYC" → "JFK"
      * "Los Angeles"/"LA" → "LAX"
-     * [Add more major city mappings]
 
 3. Passengers:
    - adults: Default 1 if not specified, max 9
@@ -497,7 +498,7 @@ VALIDATION RULES:
 
 ERROR HANDLING:
 Return success: false with appropriate message for:
-1. Invalid/missing dates
+1. missing dates
 2. Unrecognized airports
 3. Invalid passenger counts
 4. Any other parsing failures
@@ -519,6 +520,25 @@ Example Output:
     "origin": "ORD",
     "destination": "JFK",
     "departureDate": "2025-01-15",
+    "returnDate": "",
+    "adults": 1,
+    "children": 0,
+    "infants": 0,
+    "travelClass": "ECONOMY",
+    "tripType": "one-way"
+  }
+}
+
+Example Input: "flight on christmas from nyc to la"
+//defaults for adults, children, infants, travelClass, tripType will have to be used since they are not specified in the query
+Example Output:
+{
+  "success": true,
+  "message": "Successfully parsed flight request",
+  "data": {
+    "origin": "JFK",
+    "destination": "LAX",
+    "departureDate": "2024-12-25",
     "returnDate": "",
     "adults": 1,
     "children": 0,
