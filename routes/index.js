@@ -6,6 +6,7 @@ const flightRoutes = require("./flightRoutes");
 const { router: authRoutes } = require("./authRoutes");
 const tripRoutes = require("./tripRoutes");
 const airportRoutes = require("./airportRoutes");
+const paymentRoutes = require("./paymentRoutes")
 const authMiddleware = require("../middleware/auth");
 
 // Auth routes (no authentication required)
@@ -15,5 +16,8 @@ router.use("/auth", authRoutes);
 router.use("/trips", authMiddleware, tripRoutes);
 router.use("/flights", authMiddleware, flightRoutes);
 router.use("/airports", authMiddleware, airportRoutes);
+
+router.use("/payments", paymentRoutes);
+
 
 module.exports = router;
